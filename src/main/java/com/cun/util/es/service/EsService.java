@@ -102,9 +102,10 @@ public class EsService {
         List<HintSearchResponse> result = new ArrayList<>();
         if (elasticsearchRestTemplate.indexOps(IndexCoordinates.of("data_platform_hint")).exists()) {
             BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
-                    .should(QueryBuilders.fuzzyQuery("name", queryHintParam.getQueryString()))
-                    .should(QueryBuilders.fuzzyQuery("table_name", queryHintParam.getQueryString()))
-                    .should(QueryBuilders.fuzzyQuery("source_table", queryHintParam.getQueryString()));
+                    .should(QueryBuilders.matchQuery("name", queryHintParam.getQueryString()).fuzziness("1"))
+                    .should(QueryBuilders.wildcardQuery("name", "*" + queryHintParam.getQueryString().toLowerCase(Locale.ROOT) + "*"))
+                    .should(QueryBuilders.wildcardQuery("table_name", "*" + queryHintParam.getQueryString().toLowerCase(Locale.ROOT) + "*"))
+                    .should(QueryBuilders.wildcardQuery("source_table", "*" + queryHintParam.getQueryString().toLowerCase(Locale.ROOT) + "*"));
             NativeSearchQuery nativeSearchQuery = new NativeSearchQuery(boolQueryBuilder);
             SearchHits<HintSearchEsParam> search = elasticsearchRestTemplate.search(nativeSearchQuery, HintSearchEsParam.class);
 
@@ -113,7 +114,7 @@ public class EsService {
             search.getSearchHits().forEach(
                     n -> {
                         HintSearchEsParam content = n.getContent();
-                        if (StringUtils.isNotBlank(content.getName()) && content.getName().contains(queryHintParam.getQueryString()) && !tableIdSet.contains(content.getTable_id())) {
+                        if (StringUtils.isNotBlank(content.getName()) && content.getName().contains(queryHintParam.getQueryString().toLowerCase(Locale.ROOT)) && !tableIdSet.contains(content.getTable_id())) {
                             HintSearchResponse hintSearchResponse = new HintSearchResponse();
                             hintSearchResponse.setSearchName(content.getName());
                             hintSearchResponse.setTableId(content.getTable_id());
@@ -121,7 +122,7 @@ public class EsService {
                             result.add(hintSearchResponse);
                             tableIdSet.add(content.getTable_id());
                         }
-                        if (StringUtils.isNotBlank(content.getTable_name()) && content.getTable_name().contains(queryHintParam.getQueryString()) && !tableIdSet.contains(content.getTable_id())) {
+                        if (StringUtils.isNotBlank(content.getTable_name()) && content.getTable_name().contains(queryHintParam.getQueryString().toLowerCase(Locale.ROOT)) && !tableIdSet.contains(content.getTable_id())) {
                             HintSearchResponse hintSearchResponse = new HintSearchResponse();
                             hintSearchResponse.setSearchName(content.getTable_name());
                             hintSearchResponse.setTableId(content.getTable_id());
@@ -129,7 +130,7 @@ public class EsService {
                             result.add(hintSearchResponse);
                             tableIdSet.add(content.getTable_id());
                         }
-                        if (StringUtils.isNotBlank(content.getSource_table()) && content.getSource_table().contains(queryHintParam.getQueryString()) && !tableIdSet.contains(content.getTable_id())) {
+                        if (StringUtils.isNotBlank(content.getSource_table()) && content.getSource_table().contains(queryHintParam.getQueryString().toLowerCase(Locale.ROOT)) && !tableIdSet.contains(content.getTable_id())) {
                             HintSearchResponse hintSearchResponse = new HintSearchResponse();
                             hintSearchResponse.setSearchName(content.getSource_table());
                             hintSearchResponse.setTableId(content.getTable_id());
